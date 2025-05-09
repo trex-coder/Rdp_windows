@@ -1,17 +1,23 @@
-
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, firestore
 import os
 
+# Load credentials and initialize app
 cred = credentials.Certificate('creds.json')
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://loudwave-54180-default-rtdb.asia-southeast1.firebasedatabase.app/'
+firebase_admin.initialize_app(cred)
+
+# Connect to Firestore
+db = firestore.client()
+
+# Prepare the document
+doc_ref = db.collection('reemo_sessions').document(os.environ['GITHUB_ID'])
+
+# Set session data
+doc_ref.set({
+    'github_id': os.environ['GITHUB_ID'],
+    'vm_name': os.environ['VM_NAME'],
+    'session_id': os.environ['SESSION_ID'],
+    'device_id': os.environ['DEVICE_ID']
 })
 
-ref = db.reference(f"users/{os.environ['UID']}/url")
-ref.set(os.environ['NGROK_URL'])
-
-# Also print the URL in a loop like before
-url = os.environ['NGROK_URL']
-for i in range(5):
-    print(f"noVNC Link: {url}")
+print('Uploaded to Firebase successfully.')
