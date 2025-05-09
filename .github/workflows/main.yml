@@ -29,7 +29,7 @@ jobs:
           echo "SESSION_ID=$sessionId" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
           echo "DEVICE_ID=$deviceId" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
-      - name: Upload Session Info to Firebase (Inline Python)
+      - name: Upload to Firebase (Python Script)
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
           GITHUB_ID: ${{ github.actor }}
@@ -39,25 +39,25 @@ jobs:
         run: |
           echo "$env:FIREBASE_KEY" > creds.json
 
-          $uploadScript = @"
+          echo """
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 
-cred = credentials.Certificate("creds.json")
+cred = credentials.Certificate('creds.json')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-doc_ref = db.collection("reemo_sessions").document(os.environ["GITHUB_ID"])
+doc_ref = db.collection('reemo_sessions').document(os.environ['GITHUB_ID'])
 doc_ref.set({
-    "github_id": os.environ["GITHUB_ID"],
-    "vm_name": os.environ["VM_NAME"],
-    "session_id": os.environ["SESSION_ID"],
-    "device_id": os.environ["DEVICE_ID"]
+    'github_id': os.environ['GITHUB_ID'],
+    'vm_name': os.environ['VM_NAME'],
+    'session_id': os.environ['SESSION_ID'],
+    'device_id': os.environ['DEVICE_ID']
 })
-"@
+print('Uploaded to Firebase successfully.')
+""" > upload_url.py
 
-          $uploadScript | Out-File -Encoding utf8 upload_url.py
           python upload_url.py
 
       - name: Loop output of session info
